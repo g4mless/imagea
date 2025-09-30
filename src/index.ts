@@ -2,12 +2,13 @@ import 'dotenv/config'
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { prettyJSON } from 'hono/pretty-json'
 import ImageKit from 'imagekit'
 
 const app = new Hono({ strict: false })
 
 app.use('*', cors())
-
+app.use(prettyJSON())
 const REQUIRED = ['IMAGEKIT_PUBLIC_KEY','IMAGEKIT_PRIVATE_KEY','IMAGEKIT_URL_ENDPOINT'] as const
 {
   const miss = REQUIRED.filter((k) => !process.env[k])
