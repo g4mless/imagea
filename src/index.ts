@@ -54,7 +54,7 @@ app.post('/images', async (c) => {
       const uploaded = await imagekit.upload({
         file: cleanedBase64,
         fileName,
-        folder: json.folder ?? '/uploads',
+        folder: '/uploads',
       })
 
       return c.json(toPublicFile(uploaded), 201)
@@ -82,7 +82,7 @@ app.post('/images', async (c) => {
     const uploaded = await imagekit.upload({
       file,
       fileName: fileName!,
-      folder: typeof body.folder === 'string' ? body.folder : '/uploads',
+      folder: '/uploads',
     })
 
     return c.json(toPublicFile(uploaded), 201)
@@ -115,21 +115,46 @@ app.get('/images', async (c) => {
     const skip = Number.isFinite(skipParsed) ? Math.max(0, skipParsed) : 0
 
     const options: Record<string, any> = {
-      limit,
+      limit: Math.min(100, limit * 3),
       skip,
     }
 
-    const pathParam = (q.folder as string) || (q.path as string)
-    if (typeof pathParam === 'string' && pathParam) options.path = pathParam
+    options.path = '/uploads'
 
     const fileType = q.fileType as string | undefined
     if (fileType && ['all', 'image', 'non-image', 'video'].includes(fileType)) {
       options.fileType = fileType
     }
 
+    const sortParam = q.sort as string
+    let sortField = 'created_at'
+    let sortDirection: 'asc' | 'desc' = 'desc'
 
-    const items = await imagekit.listFiles(options)
-    return c.json(items.map(toPublicFile))
+    if (sortParam) {
+      const validSortFields = ['created_at', 'updated_at', 'name', 'size']
+      const validDirections = ['asc', 'desc']
+
+      const [field, direction = 'desc'] = sortParam.split(':')
+
+      if (validSortFields.includes(field) && validDirections.includes(direction)) {
+        sortField = field
+        sortDirection = direction as 'asc' | 'desc'
+      }
+    }
+
+    const files = await imagekit.listFiles(options)
+
+    const sortedFiles = files
+      .filter((item) => (item as any).fileType !== 'folder')
+      .sort((a, b) => {
+        const timeA = new Date((a as any).createdAt || 0).getTime()
+        const timeB = new Date((b as any).createdAt || 0).getTime()
+        return timeB - timeA
+      })
+      .slice(0, limit)
+
+    return c.json(sortedFiles.map(toPublicFile))
+
   } catch (err: any) {
     return c.json({ error: err?.message || 'List failed' }, 500)
   }
