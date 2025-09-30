@@ -23,13 +23,13 @@ const imagekit = new ImageKit({
 app.get('/', (c) => c.text('ok'))
 
 // ImageKit SDK auth
-app.get('/api/imagekit-auth', (c) => {
+app.get('/imagekit-auth', (c) => {
   const auth = imagekit.getAuthenticationParameters()
   return c.json(auth)
 })
 
 // Upload: multipart or JSON base64
-app.post('/api/images', async (c) => {
+app.post('/images', async (c) => {
   try {
     const contentType = c.req.header('content-type') || ''
 
@@ -91,7 +91,7 @@ app.post('/api/images', async (c) => {
 })
 
 // Delete by fileId
-app.delete('/api/images/:fileId', async (c) => {
+app.delete('/images/:fileId', async (c) => {
   const fileId = c.req.param('fileId')
   if (!fileId) return c.json({ error: 'Missing fileId' }, 400)
 
@@ -104,7 +104,7 @@ app.delete('/api/images/:fileId', async (c) => {
 })
 
 // List images
-app.get('/api/images', async (c) => {
+app.get('/images', async (c) => {
   try {
     const q = c.req.query()
 
@@ -135,7 +135,7 @@ app.get('/api/images', async (c) => {
 })
 
 // Get file details
-app.get('/api/images/:fileId', async (c) => {
+app.get('/images/:fileId', async (c) => {
   const fileId = c.req.param('fileId')
   if (!fileId) return c.json({ error: 'Missing fileId' }, 400)
   try {
@@ -166,12 +166,27 @@ type PublicFile = {
 }
 
 function toPublicFile(f: any): PublicFile {
+  const clean = (u?: string) => (u ? stripUpdatedAt(u) : '')
   return {
     id: f.fileId ?? f.id ?? '',
     name: f.name ?? '',
     filetype: f.fileType ?? f.mime ?? undefined,
-    url: f.url ?? '',
+    url: clean(f.url ?? ''),
     thumbnail: f.thumbnail ?? f.thumbnailUrl ?? undefined,
+  }
+}
+
+function stripUpdatedAt(urlStr: string): string {
+  try {
+    const u = new URL(urlStr)
+    u.searchParams.delete('updatedAt')
+    return u.toString()
+  } catch {
+    return urlStr.replace(/([?&])updatedAt=\d+(&?)/, (_, sep, trailing) => {
+      if (sep === '?' && !trailing) return ''
+      if (trailing) return sep
+      return ''
+    })
   }
 }
 
