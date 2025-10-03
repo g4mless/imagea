@@ -54,7 +54,7 @@ app.post('/images', async (c) => {
       const uploaded = await imagekit.upload({
         file: cleanedBase64,
         fileName,
-        folder: '/uploads',
+        folder: '/up',
       })
 
       return c.json(toPublicFile(uploaded), 201)
@@ -82,7 +82,7 @@ app.post('/images', async (c) => {
     const uploaded = await imagekit.upload({
       file,
       fileName: fileName!,
-      folder: '/uploads',
+      folder: '/up',
     })
 
     return c.json(toPublicFile(uploaded), 201)
@@ -119,7 +119,7 @@ app.get('/images', async (c) => {
       skip,
     }
 
-    options.path = '/uploads'
+    options.path = '/up'
 
     const fileType = q.fileType as string | undefined
     if (fileType && ['all', 'image', 'non-image', 'video'].includes(fileType)) {

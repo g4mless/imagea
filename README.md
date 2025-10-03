@@ -90,7 +90,7 @@ curl http://localhost:3000/api/images
 
 - List with folder + pagination
 ```
-curl "http://localhost:3000/api/images?folder=/uploads&limit=10&skip=0"
+curl "http://localhost:3000/api/images?limit=10&skip=0"
 ```
 
 - Get details
